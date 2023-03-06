@@ -3,17 +3,10 @@ package dev.evo.prometheus.ktor
 import dev.evo.prometheus.*
 import dev.evo.prometheus.hiccup.HiccupMetrics
 import dev.evo.prometheus.util.measureTimeMillis
-
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.ApplicationCallPipeline
-import io.ktor.server.application.BaseApplicationPlugin
-import io.ktor.server.application.call
-import io.ktor.server.application.install
-import io.ktor.server.request.httpMethod
-import io.ktor.server.request.path
+import io.ktor.http.*
+import io.ktor.http.content.*
+import io.ktor.server.application.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.get
 import io.ktor.server.routing.Route
@@ -25,6 +18,7 @@ import io.ktor.server.routing.PathSegmentTailcardRouteSelector
 import io.ktor.server.routing.PathSegmentWildcardRouteSelector
 import io.ktor.server.routing.Routing
 import io.ktor.util.AttributeKey
+import io.ktor.utils.io.*
 
 expect val processMetrics: ProcessMetrics
 
@@ -81,6 +75,8 @@ open class MetricsFeature<TMetrics : HttpMetrics>(val metrics: TMetrics) :
     class Configuration {
         var totalRequests: Histogram<HttpRequestLabels>? = null
         var inFlightRequests: GaugeLong<HttpRequestLabels>? = null
+        var requestSizes: Histogram<HttpRequestLabels>? = null
+        var responseSizes: Histogram<HttpRequestLabels>? = null
         var enablePathLabel = false
     }
 
@@ -88,12 +84,14 @@ open class MetricsFeature<TMetrics : HttpMetrics>(val metrics: TMetrics) :
         return Configuration().apply {
             totalRequests = metrics.totalRequests
             inFlightRequests = metrics.inFlightRequests
+            requestSizes = metrics.requestSizes
+            responseSizes = metrics.responseSizes
         }
     }
 
+
     override fun install(pipeline: Application, configure: Configuration.() -> Unit) {
         val configuration = defaultConfiguration().apply(configure)
-
         pipeline.environment.monitor.subscribe(Routing.RoutingCallStarted) { call ->
             call.attributes.put(routeKey, call.route)
         }
@@ -107,8 +105,21 @@ open class MetricsFeature<TMetrics : HttpMetrics>(val metrics: TMetrics) :
                 } ?: proceed()
             }
 
+            val requestSize = call.request.receiveChannel().availableForRead.toDouble()
+            configuration.requestSizes?.observe(requestSize) {
+                fromCall(call, configuration.enablePathLabel)
+            }
             configuration.totalRequests?.observe(requestTimeMs) {
                 fromCall(call, configuration.enablePathLabel)
+            }
+        }
+        pipeline.sendPipeline.intercept(ApplicationSendPipeline.After) {
+            val response = subject as OutgoingContent
+            val responseSize = response.contentLength?.toDouble()
+            responseSize?.let {
+                configuration.responseSizes?.observe(responseSize) {
+                    fromCall(call, configuration.enablePathLabel)
+                }
             }
         }
     }
@@ -129,6 +140,12 @@ interface HttpMetrics {
     val inFlightRequests: GaugeLong<HttpRequestLabels>?
         get() = null
 
+    val requestSizes: Histogram<HttpRequestLabels>?
+        get() = null
+
+    val responseSizes: Histogram<HttpRequestLabels>?
+        get() = null
+
     val metrics: PrometheusMetrics
 }
 
@@ -141,6 +158,11 @@ class DefaultMetrics : PrometheusMetrics(), HttpMetrics {
         get() = http.totalRequests
     override val inFlightRequests: GaugeLong<HttpRequestLabels>?
         get() = http.inFlightRequests
+    override val requestSizes: Histogram<HttpRequestLabels>?
+        get() = http.requestSizes
+
+    override val responseSizes: Histogram<HttpRequestLabels>?
+        get() = http.responseSizes
 
     override val metrics: PrometheusMetrics
         get() = this
@@ -160,6 +182,12 @@ class StandardHttpMetrics : PrometheusMetrics() {
     val inFlightRequests by gaugeLong("${prefix}_in_flight_requests") {
         HttpRequestLabels()
     }
+    val requestSizes by histogram(
+        "${prefix}_request_size_bytes", logScale(0, 3)
+    ) { HttpRequestLabels() }
+    val responseSizes by histogram(
+        "${prefix}_response_size_bytes", logScale(0, 3)
+    ) { HttpRequestLabels() }
 }
 
 class HttpRequestLabels : LabelSet() {

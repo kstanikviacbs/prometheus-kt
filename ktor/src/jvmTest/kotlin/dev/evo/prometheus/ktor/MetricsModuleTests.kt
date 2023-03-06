@@ -2,23 +2,16 @@ package dev.evo.prometheus.ktor
 
 import dev.evo.prometheus.LabelSet
 import dev.evo.prometheus.PrometheusMetrics
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 
-import io.ktor.http.ContentType
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.application.install
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
-import io.ktor.server.routing.accept
-import io.ktor.server.routing.get
-import io.ktor.server.routing.method
-import io.ktor.server.routing.param
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
-import io.ktor.server.routing.routing
-import io.ktor.server.testing.handleRequest
-import io.ktor.server.testing.withTestApplication
+import io.ktor.server.routing.*
+import io.ktor.server.testing.*
 import io.ktor.server.util.getOrFail
 
 import kotlinx.coroutines.delay
@@ -79,7 +72,43 @@ class MetricsModuleTests {
             assertContains(content, "http_total_requests_bucket{$labels,le=\"10000.0\"} 1.0")
             assertContains(content, "http_total_requests_bucket{$labels,le=\"+Inf\"} 1.0")
             assertContains(content, "http_in_flight_requests{method=\"GET\"} 1.0")
+            assertContains(
+                content,
+                "http_response_size_bytes_bucket{method=\"GET\",route=\"/metrics\",le=\"+Inf\"} 1.0"
+            )
+            assertContains(content, "http_response_size_bytes_count{method=\"GET\",route=\"/metrics\"} 1.0")
         }
+    }
+
+    @Test
+    fun testPost() = testApplication {
+        // given
+        application {
+            metricsModule()
+            routing {
+                post("/post") {
+                    call.respond(HttpStatusCode.OK)
+                }
+            }
+        }
+        client.post("/post") {
+            setBody("test")
+        }
+
+        // when
+        val response = client.get("/metrics")
+
+        // then
+        assertEquals(HttpStatusCode.OK, response.status)
+        val content = response.bodyAsText()
+        assertContains(
+            content,
+            "http_request_size_bytes_sum{method=\"POST\",response_code=\"200\",route=\"/post\"} 4.0"
+        )
+        assertContains(
+            content,
+            "http_request_size_bytes_count{method=\"POST\",response_code=\"200\",route=\"/post\"} 1.0"
+        )
     }
 
     @Test
@@ -104,6 +133,7 @@ class MetricsModuleTests {
         class TaskLables : LabelSet() {
             var source by label("source")
         }
+
         class TaskMetrics : PrometheusMetrics() {
             val processedCount by counter("processed_count", labelsFactory = ::TaskLables)
             val processedTime by counter("processed_time", labelsFactory = ::TaskLables)
@@ -138,6 +168,7 @@ class MetricsModuleTests {
             override val metrics: PrometheusMetrics
                 get() = this
         }
+
         val metrics = CustomMetrics()
         metricsModule(MetricsFeature(metrics))
     }) {
