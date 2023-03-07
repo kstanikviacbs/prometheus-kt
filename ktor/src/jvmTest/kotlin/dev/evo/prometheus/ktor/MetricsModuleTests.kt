@@ -40,7 +40,7 @@ class MetricsModuleTests {
 
     @Test
     fun `metrics module with default metrics`() = withTestApplication({
-        metricsModule()
+        metricsModule(startHiccups = true)
     }) {
         // Waiting for a hiccup
         Thread.sleep(20)
@@ -140,7 +140,7 @@ class MetricsModuleTests {
         }
 
         val metrics = TaskMetrics()
-        metricsModule(metrics)
+        metricsModule(metrics = metrics)
 
         runBlocking {
             metrics.processedCount.add(2.0) { source = "kafka" }
@@ -164,13 +164,10 @@ class MetricsModuleTests {
             override val totalRequests by histogram("request_duration", listOf(100.0, 500.0, 1000.0)) {
                 HttpRequestLabels()
             }
-
-            override val metrics: PrometheusMetrics
-                get() = this
         }
 
         val metrics = CustomMetrics()
-        metricsModule(MetricsFeature(metrics))
+        metricsModule(metrics)
     }) {
         with(handleRequest(HttpMethod.Get, "/metrics")) {
             assertEquals(HttpStatusCode.OK, response.status())
@@ -201,9 +198,10 @@ class MetricsModuleTests {
 
     @Test
     fun `custom module configuration`() = withTestApplication({
-        val metricsFeature = MetricsFeature()
-        install(metricsFeature) {
-            enablePathLabel = true
+        val metrics = Metrics()
+        install(MetricsPlugin) {
+            this.metrics = metrics
+            this.enablePathLabel = true
         }
 
         routing {
@@ -216,7 +214,7 @@ class MetricsModuleTests {
                 call.respondText("It was really slooow!")
             }
             route("/nested") {
-                metrics(metricsFeature.metrics)
+                metrics(metrics)
             }
         }
     }) {
@@ -258,8 +256,10 @@ class MetricsModuleTests {
 
     @Test
     fun routing() = withTestApplication({
-        val metricsFeature = MetricsFeature()
-        install(metricsFeature)
+        val metrics = Metrics()
+        install(MetricsPlugin) {
+            this.metrics = metrics
+        }
 
         routing {
             route("/search") {
@@ -299,7 +299,7 @@ class MetricsModuleTests {
                 call.respond(HttpStatusCode.OK, "wildcard")
             }
             route("/") {
-                metrics(metricsFeature.metrics)
+                metrics(metrics)
             }
         }
     }) {
