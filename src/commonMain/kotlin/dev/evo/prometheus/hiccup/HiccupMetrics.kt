@@ -13,8 +13,8 @@ expect val hiccupCoroutineContext: CoroutineContext
 
 class HiccupMetrics : PrometheusMetrics() {
     val hiccups by histogram(
-            "hiccups",
-            listOf(5.0) + logScale(1, 3)
+        "hiccups",
+        listOf(5.0) + logScale(IntRange(1, 3))
     )
 
     fun startTracking(

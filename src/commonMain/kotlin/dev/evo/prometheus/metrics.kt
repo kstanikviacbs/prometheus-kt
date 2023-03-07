@@ -10,11 +10,11 @@ import kotlin.reflect.KProperty
 
 typealias LabelsSetter<L> = L.() -> Unit
 
-abstract class Metric<L: LabelSet>(
-        protected val metrics: PrometheusMetrics,
-        val name: String,
-        val help: String?,
-        private val labelsFactory: (() -> L)?
+abstract class Metric<L : LabelSet>(
+    protected val metrics: PrometheusMetrics,
+    val name: String,
+    val help: String?,
+    private val labelsFactory: (() -> L)?
 ) {
     abstract val type: String
 
@@ -43,16 +43,16 @@ abstract class Metric<L: LabelSet>(
     }
 }
 
-class Gauge<L: LabelSet>(
-        metrics: PrometheusMetrics,
-        name: String,
-        help: String?,
-        labelsFactory: (() -> L)?
+class Gauge<L : LabelSet>(
+    metrics: PrometheusMetrics,
+    name: String,
+    help: String?,
+    labelsFactory: (() -> L)?
 ) : Metric<L>(metrics, name, help, labelsFactory) {
     override val type = "gauge"
 
     suspend fun get(labels: L? = null): Double? {
-        val value =  metrics.find<MetricValue.Gauge>(
+        val value = metrics.find<MetricValue.Gauge>(
             MetricKey(name, labels ?: LabelSet.EMPTY)
         )
         return value?.get()
@@ -82,20 +82,20 @@ class Gauge<L: LabelSet>(
     suspend fun set(value: Double, labelsSetter: LabelsSetter<L>? = null) {
         val labels = constructLabels(labelsSetter)
         metrics.getOrCreate(MetricKey(name, labels), MetricValue::Gauge)
-                .set(value)
+            .set(value)
     }
 }
 
-class GaugeLong<L: LabelSet>(
-        metrics: PrometheusMetrics,
-        name: String,
-        help: String?,
-        labelsFactory: (() -> L)?
+class GaugeLong<L : LabelSet>(
+    metrics: PrometheusMetrics,
+    name: String,
+    help: String?,
+    labelsFactory: (() -> L)?
 ) : Metric<L>(metrics, name, help, labelsFactory) {
     override val type = "gauge"
 
     suspend fun get(labels: L? = null): Long? {
-        val value =  metrics.find<MetricValue.GaugeLong>(
+        val value = metrics.find<MetricValue.GaugeLong>(
             MetricKey(name, labels ?: LabelSet.EMPTY)
         )
         return value?.get()
@@ -125,20 +125,20 @@ class GaugeLong<L: LabelSet>(
     suspend fun set(value: Long, labelsSetter: LabelsSetter<L>? = null) {
         val labels = constructLabels(labelsSetter)
         metrics.getOrCreate(MetricKey(name, labels), MetricValue::GaugeLong)
-                .set(value)
+            .set(value)
     }
 }
 
-class Counter<L: LabelSet>(
-        metrics: PrometheusMetrics,
-        name: String,
-        help: String?,
-        labelsFactory: (() -> L)?
+class Counter<L : LabelSet>(
+    metrics: PrometheusMetrics,
+    name: String,
+    help: String?,
+    labelsFactory: (() -> L)?
 ) : Metric<L>(metrics, name, help, labelsFactory) {
     override val type = "counter"
 
     suspend fun get(labels: L? = null): Double? {
-        val value =  metrics.find<MetricValue.Counter>(
+        val value = metrics.find<MetricValue.Counter>(
             MetricKey(name, labels ?: LabelSet.EMPTY)
         )
         return value?.get()
@@ -152,20 +152,20 @@ class Counter<L: LabelSet>(
         }
         val labels = constructLabels(labelsSetter)
         metrics.getOrCreate(MetricKey(name, labels), MetricValue::Counter)
-                .add(value)
+            .add(value)
     }
 }
 
-class CounterLong<L: LabelSet>(
-        metrics: PrometheusMetrics,
-        name: String,
-        help: String?,
-        labelsFactory: (() -> L)?
+class CounterLong<L : LabelSet>(
+    metrics: PrometheusMetrics,
+    name: String,
+    help: String?,
+    labelsFactory: (() -> L)?
 ) : Metric<L>(metrics, name, help, labelsFactory) {
     override val type = "counter"
 
     suspend fun get(labels: L? = null): Long? {
-        val value =  metrics.find<MetricValue.CounterLong>(
+        val value = metrics.find<MetricValue.CounterLong>(
             MetricKey(name, labels ?: LabelSet.EMPTY)
         )
         return value?.get()
@@ -179,7 +179,7 @@ class CounterLong<L: LabelSet>(
         }
         val labels = constructLabels(labelsSetter)
         metrics.getOrCreate(MetricKey(name, labels), MetricValue::CounterLong)
-                .add(value)
+            .add(value)
     }
 }
 
@@ -191,12 +191,12 @@ class HistogramLabelSet(le: String) : LabelSet() {
     }
 }
 
-class Histogram<L: LabelSet>(
-        metrics: PrometheusMetrics,
-        name: String,
-        help: String?,
-        labelsFactory: (() -> L)?,
-        buckets: List<Double>
+class Histogram<L : LabelSet>(
+    metrics: PrometheusMetrics,
+    name: String,
+    help: String?,
+    labelsFactory: (() -> L)?,
+    buckets: List<Double>
 ) : Metric<L>(metrics, name, help, labelsFactory) {
     override val type = "histogram"
 
@@ -218,7 +218,7 @@ class Histogram<L: LabelSet>(
     }
 
     suspend fun get(labels: L? = null): MetricValue.Histogram.Data? {
-        val value =  metrics.find<MetricValue.Histogram>(
+        val value = metrics.find<MetricValue.Histogram>(
             MetricKey(name, labels ?: LabelSet.EMPTY)
         )
         return value?.get()
@@ -228,7 +228,7 @@ class Histogram<L: LabelSet>(
         val labels = constructLabels(labelsSetter)
         val bucketIx = findBucketIx(value)
         metrics.getOrCreate(MetricKey(name, labels)) { MetricValue.Histogram(buckets) }
-                .observe(bucketIx, value)
+            .observe(bucketIx, value)
     }
 
     suspend fun measureTime(labelsSetter: LabelsSetter<L>? = null, block: suspend () -> Unit) {
@@ -262,11 +262,11 @@ class Histogram<L: LabelSet>(
     }
 }
 
-class SimpleSummary<L: LabelSet>(
-        metrics: PrometheusMetrics,
-        name: String,
-        help: String?,
-        labelsFactory: (() -> L)?
+class SimpleSummary<L : LabelSet>(
+    metrics: PrometheusMetrics,
+    name: String,
+    help: String?,
+    labelsFactory: (() -> L)?
 ) : Metric<L>(metrics, name, help, labelsFactory) {
     override val type = "summary"
 
@@ -277,7 +277,7 @@ class SimpleSummary<L: LabelSet>(
     override fun getSamleNames() = getSampleNamesForSuffixes(SUFFIXES)
 
     suspend fun get(labels: L? = null): MetricValue.SimpleSummary.Data? {
-        val value =  metrics.find<MetricValue.SimpleSummary>(
+        val value = metrics.find<MetricValue.SimpleSummary>(
             MetricKey(name, labels ?: LabelSet.EMPTY)
         )
         return value?.get()
@@ -286,7 +286,7 @@ class SimpleSummary<L: LabelSet>(
     suspend fun observe(value: Double, labelsSetter: LabelsSetter<L>? = null) {
         val labels = constructLabels(labelsSetter)
         metrics.getOrCreate(MetricKey(name, labels), MetricValue::SimpleSummary)
-                .observe(value)
+            .observe(value)
     }
 
     suspend fun measureTime(labelsSetter: LabelsSetter<L>? = null, block: suspend () -> Unit) {
@@ -310,7 +310,9 @@ abstract class PrometheusMetrics {
          * logScale(0, 1) will generate next sequence:
          * listOf(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0)
          */
-        fun logScale(startOrder: Int, endOrder: Int): List<Double> {
+        fun logScale(range: IntRange): List<Double> {
+            val startOrder = range.first
+            val endOrder = range.last
             if (startOrder > endOrder) {
                 throw IllegalArgumentException(
                     "[startOrder=$startOrder] must be less than or equal [endOrder=$endOrder]"
@@ -328,13 +330,13 @@ abstract class PrometheusMetrics {
         }
     }
 
-    class MetricDelegateProvider<M: Metric<L>, L: LabelSet>(
-            private val name: String,
-            private val metricFactory: (PrometheusMetrics) -> M
+    class MetricDelegateProvider<M : Metric<L>, L : LabelSet>(
+        private val name: String,
+        private val metricFactory: (PrometheusMetrics) -> M
     ) {
         operator fun provideDelegate(
-                thisRef: PrometheusMetrics,
-                prop: KProperty<*>
+            thisRef: PrometheusMetrics,
+            prop: KProperty<*>
         ) = object : ReadOnlyProperty<PrometheusMetrics, M> {
             private val metric = metricFactory(thisRef).also { m ->
                 thisRef.checkMetricSampleNames(m, prop.name)
@@ -345,91 +347,87 @@ abstract class PrometheusMetrics {
         }
     }
 
-    fun <L: LabelSet> gauge(
-            name: String, help: String? = null, labelsFactory: (() -> L)?
-    ): MetricDelegateProvider<Gauge<L>, L>
-    {
+    fun <L : LabelSet> gauge(
+        name: String, help: String? = null, labelsFactory: (() -> L)?
+    ): MetricDelegateProvider<Gauge<L>, L> {
         return MetricDelegateProvider(name) { promMetrics ->
             Gauge(promMetrics, name, help, labelsFactory)
         }
     }
+
     fun gauge(
-            name: String, help: String? = null
-    ): MetricDelegateProvider<Gauge<LabelSet.EMPTY>, LabelSet.EMPTY>
-    {
+        name: String, help: String? = null
+    ): MetricDelegateProvider<Gauge<LabelSet.EMPTY>, LabelSet.EMPTY> {
         return gauge(name, help, null)
     }
-    fun <L: LabelSet> gaugeLong(
-            name: String, help: String? = null, labelsFactory: (() -> L)?
-    ): MetricDelegateProvider<GaugeLong<L>, L>
-    {
+
+    fun <L : LabelSet> gaugeLong(
+        name: String, help: String? = null, labelsFactory: (() -> L)?
+    ): MetricDelegateProvider<GaugeLong<L>, L> {
         return MetricDelegateProvider(name) { promMetrics ->
             GaugeLong(promMetrics, name, help, labelsFactory)
         }
     }
+
     fun gaugeLong(
-            name: String, help: String? = null
-    ): MetricDelegateProvider<GaugeLong<LabelSet.EMPTY>, LabelSet.EMPTY>
-    {
+        name: String, help: String? = null
+    ): MetricDelegateProvider<GaugeLong<LabelSet.EMPTY>, LabelSet.EMPTY> {
         return gaugeLong(name, help, null)
     }
 
-    fun <L: LabelSet> counter(
-            name: String, help: String? = null, labelsFactory: (() -> L)?
-    ): MetricDelegateProvider<Counter<L>, L>
-    {
+    fun <L : LabelSet> counter(
+        name: String, help: String? = null, labelsFactory: (() -> L)?
+    ): MetricDelegateProvider<Counter<L>, L> {
         return MetricDelegateProvider(name) { promMetrics ->
             Counter(promMetrics, name, help, labelsFactory)
         }
     }
+
     fun counter(
-            name: String, help: String? = null
-    ): MetricDelegateProvider<Counter<LabelSet.EMPTY>, LabelSet.EMPTY>
-    {
+        name: String, help: String? = null
+    ): MetricDelegateProvider<Counter<LabelSet.EMPTY>, LabelSet.EMPTY> {
         return counter(name, help, null)
     }
-    fun <L: LabelSet> counterLong(
-            name: String, help: String? = null, labelsFactory: (() -> L)?
-    ): MetricDelegateProvider<CounterLong<L>, L>
-    {
+
+    fun <L : LabelSet> counterLong(
+        name: String, help: String? = null, labelsFactory: (() -> L)?
+    ): MetricDelegateProvider<CounterLong<L>, L> {
         return MetricDelegateProvider(name) { promMetrics ->
             CounterLong(promMetrics, name, help, labelsFactory)
         }
     }
+
     fun counterLong(
-            name: String, help: String? = null
-    ): MetricDelegateProvider<CounterLong<LabelSet.EMPTY>, LabelSet.EMPTY>
-    {
+        name: String, help: String? = null
+    ): MetricDelegateProvider<CounterLong<LabelSet.EMPTY>, LabelSet.EMPTY> {
         return counterLong(name, help, null)
     }
 
-    fun <L: LabelSet> simpleSummary(
-            name: String, help: String? = null, labelsFactory: (() -> L)?
-    ): MetricDelegateProvider<SimpleSummary<L>, L>
-    {
+    fun <L : LabelSet> simpleSummary(
+        name: String, help: String? = null, labelsFactory: (() -> L)?
+    ): MetricDelegateProvider<SimpleSummary<L>, L> {
         return MetricDelegateProvider(name) { promMetrics ->
             SimpleSummary(promMetrics, name, help, labelsFactory)
         }
     }
+
     fun simpleSummary(
-            name: String, help: String? = null
-    ): MetricDelegateProvider<SimpleSummary<LabelSet.EMPTY>, LabelSet.EMPTY>
-    {
+        name: String, help: String? = null
+    ): MetricDelegateProvider<SimpleSummary<LabelSet.EMPTY>, LabelSet.EMPTY> {
         return simpleSummary(name, help, null)
     }
 
-    fun <L: LabelSet> histogram(
-            name: String, buckets: List<Double>, help: String? = null, labelsFactory: (() -> L)?
-    ): MetricDelegateProvider<Histogram<L>, L>
-    {
+    fun <L : LabelSet> histogram(
+        name: String, buckets: List<Double>, help: String? = null, labelsFactory: (() -> L)?
+    ): MetricDelegateProvider<Histogram<L>, L> {
         return MetricDelegateProvider(name) { promMetrics ->
             Histogram(promMetrics, name, help, labelsFactory, buckets)
         }
     }
+
     fun histogram(
-            name: String, buckets: List<Double>, help: String? = null
-    ): MetricDelegateProvider<Histogram<LabelSet.EMPTY>, LabelSet.EMPTY>
-    {
+        name: String, buckets: List<Double>, help: String? = null
+    ): MetricDelegateProvider<Histogram<LabelSet.EMPTY>, LabelSet.EMPTY> {
         return histogram(name, buckets, help, null)
     }
 
@@ -437,11 +435,14 @@ abstract class PrometheusMetrics {
 
     private class SubMetrics(val prefix: String, val metrics: PrometheusMetrics)
 
-    class SubmetricsDeletageProvider<M: PrometheusMetrics>(
-            private val metrics: M,
-            private val prefix: String?
+    class SubmetricsDeletageProvider<M : PrometheusMetrics>(
+        private val metrics: M,
+        private val prefix: String?
     ) {
-        operator fun provideDelegate(thisRef: PrometheusMetrics, prop: KProperty<*>): ReadOnlyProperty<PrometheusMetrics, M> {
+        operator fun provideDelegate(
+            thisRef: PrometheusMetrics,
+            prop: KProperty<*>
+        ): ReadOnlyProperty<PrometheusMetrics, M> {
             val sm = SubMetrics(prefix ?: "", metrics)
             thisRef.checkSubMetricsSampleNames(sm, prop.name)
             thisRef.submetrics[prop.name] = sm
@@ -453,10 +454,12 @@ abstract class PrometheusMetrics {
             }
         }
     }
-    fun <M: PrometheusMetrics> submetrics(submetrics: M): SubmetricsDeletageProvider<M> {
+
+    fun <M : PrometheusMetrics> submetrics(submetrics: M): SubmetricsDeletageProvider<M> {
         return SubmetricsDeletageProvider(submetrics, null)
     }
-    fun <M: PrometheusMetrics> submetrics(prefix: String, submetrics: M): SubmetricsDeletageProvider<M> {
+
+    fun <M : PrometheusMetrics> submetrics(prefix: String, submetrics: M): SubmetricsDeletageProvider<M> {
         return SubmetricsDeletageProvider(submetrics, prefix)
     }
 
@@ -485,15 +488,15 @@ abstract class PrometheusMetrics {
         }
     }
 
-    internal suspend inline fun <reified M: MetricValue> getOrCreate(
-            key: MetricKey,
-            noinline initialValue: () -> M
+    internal suspend inline fun <reified M : MetricValue> getOrCreate(
+        key: MetricKey,
+        noinline initialValue: () -> M
     ): M {
         return values.getOrPut(key, initialValue) as M
     }
 
-    internal suspend inline fun <M: MetricValue> find(
-            key: MetricKey,
+    internal suspend inline fun <M : MetricValue> find(
+        key: MetricKey,
     ): M? {
         @Suppress("UNCHECKED_CAST")
         return values.get(key) as M?
@@ -505,7 +508,7 @@ abstract class PrometheusMetrics {
 
     suspend fun dump(): HashMap<String, Samples> {
         return HashMap<String, Samples>(values.estimatedSamplesCount)
-                .also { dumpTo(it, "") }
+            .also { dumpTo(it, "") }
     }
 
     private suspend fun dumpTo(result: HashMap<String, Samples>, prefix: String) {
@@ -524,7 +527,7 @@ abstract class PrometheusMetrics {
 
 abstract class ProcessMetrics : PrometheusMetrics()
 
-object EmptyProcessMetrics: ProcessMetrics()
+object EmptyProcessMetrics : ProcessMetrics()
 
 fun writeSamples(result: HashMap<String, Samples>, output: Appendable) {
     for ((_, samples) in result) {

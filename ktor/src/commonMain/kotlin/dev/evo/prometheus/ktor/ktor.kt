@@ -102,8 +102,10 @@ internal fun HttpRequestLabels.fromCall(
     }
 }
 
-class Metrics(customMetrics: PrometheusMetrics = EmptyMetrics) : PrometheusMetrics(), HttpMetrics {
-    val http by submetrics(StandardHttpMetrics())
+class Metrics(customMetrics: PrometheusMetrics = EmptyMetrics, config: HttpMetrics.Config = HttpMetrics.Config()) :
+    PrometheusMetrics(),
+    HttpMetrics {
+    val http by submetrics(StandardHttpMetrics(config))
     val hiccups by submetrics(HiccupMetrics())
     val process by submetrics(processMetrics)
     val customMetrics by submetrics(customMetrics)
@@ -129,22 +131,28 @@ interface HttpMetrics {
         get() = null
     val responseSizes: Histogram<HttpRequestLabels>?
         get() = null
+
+    data class Config(
+        val totalRequestsRange: IntRange = IntRange(0, 4),
+        val requestSizesRange: IntRange = IntRange(0, 6),
+        val responseSizesRange: IntRange = IntRange(0, 6)
+    )
 }
 
-class StandardHttpMetrics : PrometheusMetrics() {
+class StandardHttpMetrics(config: HttpMetrics.Config) : PrometheusMetrics() {
     private val prefix = "http"
 
     val totalRequests by histogram(
-        "${prefix}_total_requests", logScale(0, 3)
+        "${prefix}_total_requests", logScale(config.totalRequestsRange)
     ) { HttpRequestLabels() }
     val inFlightRequests by gaugeLong("${prefix}_in_flight_requests") {
         HttpRequestLabels()
     }
     val requestSizes by histogram(
-        "${prefix}_request_size_bytes", logScale(0, 3)
+        "${prefix}_request_size_bytes", logScale(config.requestSizesRange)
     ) { HttpRequestLabels() }
     val responseSizes by histogram(
-        "${prefix}_response_size_bytes", logScale(0, 3)
+        "${prefix}_response_size_bytes", logScale(config.responseSizesRange)
     ) { HttpRequestLabels() }
 }
 
