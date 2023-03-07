@@ -2,6 +2,7 @@ package dev.evo.prometheus
 
 import dev.evo.prometheus.util.MetricValuesContainer
 import dev.evo.prometheus.util.measureTimeMillis
+import dev.evo.prometheus.util.measureTimeMillisWithResult
 
 import kotlin.math.abs
 import kotlin.math.pow
@@ -238,6 +239,12 @@ class Histogram<L : LabelSet>(
         observe(t, labelsSetter)
     }
 
+    suspend fun <T> measureTimeWithResult(labelsSetter: LabelsSetter<L>? = null, block: suspend () -> T): T {
+        return measureTimeMillisWithResult { block() }.also {
+            observe(it.second, labelsSetter)
+        }.first
+    }
+
     private fun findBucketIx(value: Double): Int {
         var lowerIx = 0
         var upperIx = buckets.size - 1
@@ -294,6 +301,12 @@ class SimpleSummary<L : LabelSet>(
             block()
         }
         observe(t, labelsSetter)
+    }
+
+    suspend fun <T> measureTimeWithResult(labelsSetter: LabelsSetter<L>? = null, block: suspend () -> T): T {
+        return measureTimeMillisWithResult { block() }.also {
+            observe(it.second, labelsSetter)
+        }.first
     }
 }
 

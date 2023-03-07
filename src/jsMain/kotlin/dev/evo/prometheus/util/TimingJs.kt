@@ -17,3 +17,10 @@ actual inline fun measureTimeMillis(block: () -> Unit): Double {
     val diffTime = process.hrtime(startAt)
     return diffTime.toMillis()
 }
+
+actual inline fun <T> measureTimeMillisWithResult(block: () -> T): Pair<T, Double> {
+    val startAt = process.hrtime()
+    val result = block()
+    val diffTime = process.hrtime(startAt)
+    return Pair(result, diffTime.toMillis())
+}

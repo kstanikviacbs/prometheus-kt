@@ -41,9 +41,9 @@ class MetricTests {
         val requestsLabeled by simpleSummary(
             "requests_labeled", labelsFactory = ::JustLabel
         )
-        val httpRequests by histogram("http_requests", logScale(0, 0))
+        val httpRequests by histogram("http_requests", logScale(IntRange(0, 0)))
         val httpRequestsLabeled by histogram(
-            "http_requests_labeled", logScale(0, 0), labelsFactory = ::JustLabel
+            "http_requests_labeled", logScale(IntRange(0, 0)), labelsFactory = ::JustLabel
         )
     }
 
@@ -89,20 +89,20 @@ class MetricTests {
     @JsName("logarithmScale")
     fun `logarithm scale`() {
         assertFailsWith<IllegalArgumentException> {
-            PrometheusMetrics.logScale(1, 0)
+            PrometheusMetrics.logScale(IntRange(1, 0))
         }
         assertEquals(
             (1..10).map { it.toDouble() }.toList(),
-            PrometheusMetrics.logScale(0, 0)
+            PrometheusMetrics.logScale(IntRange(0, 0))
         )
         assertEquals(
             (1..10).map { it.toDouble() }.toList() +
                     (2..10).map { (it * 10).toDouble() },
-            PrometheusMetrics.logScale(0, 1)
+            PrometheusMetrics.logScale(IntRange(0, 1))
         )
         assertEquals(
             listOf(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0),
-            PrometheusMetrics.logScale(-1, 0)
+            PrometheusMetrics.logScale(IntRange(-1, 0))
         )
     }
 
@@ -166,114 +166,114 @@ class MetricTests {
         )
     }
 
-     @Test
-     @JsName("setGauge")
-     fun `set gauge`() = runTest {
-         val metrics = TestMetrics()
+    @Test
+    @JsName("setGauge")
+    fun `set gauge`() = runTest {
+        val metrics = TestMetrics()
 
-         metrics.cpuUsagePercent.set(59.3)
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "cpu_usage_percent", "gauge", null,
-             listOf(
-                 SampleMatcher("cpu_usage_percent", 59.3)
-             )
-         )
+        metrics.cpuUsagePercent.set(59.3)
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "cpu_usage_percent", "gauge", null,
+            listOf(
+                SampleMatcher("cpu_usage_percent", 59.3)
+            )
+        )
 
-         metrics.cpuUsagePercentLabeled.set(59.3) {
-             label = "just-label"
-         }
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "cpu_usage_percent_labeled", "gauge", null,
-             listOf(
-                 SampleMatcher("cpu_usage_percent_labeled", 59.3, JustLabel("just-label"))
-             )
-         )
+        metrics.cpuUsagePercentLabeled.set(59.3) {
+            label = "just-label"
+        }
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "cpu_usage_percent_labeled", "gauge", null,
+            listOf(
+                SampleMatcher("cpu_usage_percent_labeled", 59.3, JustLabel("just-label"))
+            )
+        )
 
-         metrics.requestsInProcess.set(2)
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "requests_in_process", "gauge", null,
-             listOf(
-                 SampleMatcher("requests_in_process", 2.0)
-             )
-         )
+        metrics.requestsInProcess.set(2)
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "requests_in_process", "gauge", null,
+            listOf(
+                SampleMatcher("requests_in_process", 2.0)
+            )
+        )
 
-         metrics.requestsInProcessLabeled.set(2) {
-             label = "another-label"
-         }
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "requests_in_process_labeled", "gauge", null,
-             listOf(
-                 SampleMatcher("requests_in_process_labeled", 2.0, JustLabel("another-label"))
-             )
-         )
-     }
+        metrics.requestsInProcessLabeled.set(2) {
+            label = "another-label"
+        }
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "requests_in_process_labeled", "gauge", null,
+            listOf(
+                SampleMatcher("requests_in_process_labeled", 2.0, JustLabel("another-label"))
+            )
+        )
+    }
 
-     @Test
-     @JsName("incrementThenDecrementGauge")
-     fun `increment then decrement gauge`() = runTest {
-         val metrics = TestMetrics()
+    @Test
+    @JsName("incrementThenDecrementGauge")
+    fun `increment then decrement gauge`() = runTest {
+        val metrics = TestMetrics()
 
-         metrics.cpuUsagePercent.set(81.3)
-         metrics.cpuUsagePercent.inc()
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "cpu_usage_percent", "gauge", null,
-             listOf(
-                 SampleMatcher("cpu_usage_percent", 82.3)
-             )
-         )
-         metrics.cpuUsagePercent.dec()
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "cpu_usage_percent", "gauge", null,
-             listOf(
-                 SampleMatcher("cpu_usage_percent", 81.3)
-             )
-         )
-         metrics.cpuUsagePercent.incAndDec {
-             assertSamplesShouldMatchOnce(
-                 metrics.dump(), "cpu_usage_percent", "gauge", null,
-                 listOf(
-                     SampleMatcher("cpu_usage_percent", 82.3)
-                 )
-             )
-         }
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "cpu_usage_percent", "gauge", null,
-             listOf(
-                 SampleMatcher("cpu_usage_percent", 81.3)
-             )
-         )
+        metrics.cpuUsagePercent.set(81.3)
+        metrics.cpuUsagePercent.inc()
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "cpu_usage_percent", "gauge", null,
+            listOf(
+                SampleMatcher("cpu_usage_percent", 82.3)
+            )
+        )
+        metrics.cpuUsagePercent.dec()
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "cpu_usage_percent", "gauge", null,
+            listOf(
+                SampleMatcher("cpu_usage_percent", 81.3)
+            )
+        )
+        metrics.cpuUsagePercent.incAndDec {
+            assertSamplesShouldMatchOnce(
+                metrics.dump(), "cpu_usage_percent", "gauge", null,
+                listOf(
+                    SampleMatcher("cpu_usage_percent", 82.3)
+                )
+            )
+        }
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "cpu_usage_percent", "gauge", null,
+            listOf(
+                SampleMatcher("cpu_usage_percent", 81.3)
+            )
+        )
 
-         metrics.requestsInProcess.inc()
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "requests_in_process", "gauge", null,
-             listOf(
-                 SampleMatcher("requests_in_process", 1.0)
-             )
-         )
-         metrics.requestsInProcess.dec()
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "requests_in_process", "gauge", null,
-             listOf(
-                 SampleMatcher("requests_in_process", 0.0)
-             )
-         )
+        metrics.requestsInProcess.inc()
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "requests_in_process", "gauge", null,
+            listOf(
+                SampleMatcher("requests_in_process", 1.0)
+            )
+        )
+        metrics.requestsInProcess.dec()
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "requests_in_process", "gauge", null,
+            listOf(
+                SampleMatcher("requests_in_process", 0.0)
+            )
+        )
 
-         metrics.requestsInProcess.incAndDec {
-             assertSamplesShouldMatchOnce(
-                 metrics.dump(), "requests_in_process", "gauge", null,
-                 listOf(
-                     SampleMatcher("requests_in_process", 1.0)
-                 )
-             )
-         }
+        metrics.requestsInProcess.incAndDec {
+            assertSamplesShouldMatchOnce(
+                metrics.dump(), "requests_in_process", "gauge", null,
+                listOf(
+                    SampleMatcher("requests_in_process", 1.0)
+                )
+            )
+        }
 
-         assertSamplesShouldMatchOnce(
-             metrics.dump(), "requests_in_process", "gauge", null,
-             listOf(
-                 SampleMatcher("requests_in_process", Matcher.Eq(0.0))
-             )
-         )
-     }
+        assertSamplesShouldMatchOnce(
+            metrics.dump(), "requests_in_process", "gauge", null,
+            listOf(
+                SampleMatcher("requests_in_process", Matcher.Eq(0.0))
+            )
+        )
+    }
 
     @Test
     fun counters() = runTest {
@@ -311,7 +311,7 @@ class MetricTests {
             )
         )
         counters.simpleCounterLabeled.add(2.0)
-        counters.simpleCounterLabeled.add(3.0) { label = "test"}
+        counters.simpleCounterLabeled.add(3.0) { label = "test" }
         assertSamplesShouldMatchOnce(
             counters.dump(), "simple_counter_labeled", "counter", null,
             listOf(
@@ -461,8 +461,10 @@ class MetricTests {
             listOf(
                 SampleMatcher("http_requests_count", 4.0),
                 SampleMatcher("http_requests_sum", Matcher.Gt(13.5)),
-                SampleMatcher("http_requests_bucket", Matcher.Gte(1.0),
-                    labels, RegexLabelsMatcher(HistogramLabelSet(".*")))
+                SampleMatcher(
+                    "http_requests_bucket", Matcher.Gte(1.0),
+                    labels, RegexLabelsMatcher(HistogramLabelSet(".*"))
+                )
             )
         )
     }
@@ -524,7 +526,12 @@ class MetricTests {
                 SampleMatcher("http_requests_labeled_bucket", v2, labels, histLabels(8)),
                 SampleMatcher("http_requests_labeled_bucket", v2, labels, histLabels(9)),
                 SampleMatcher("http_requests_labeled_bucket", v2, labels, histLabels(10)),
-                SampleMatcher("http_requests_labeled_bucket", v2, labels, ExactLabelsMatcher(HistogramLabelSet("+Inf"))),
+                SampleMatcher(
+                    "http_requests_labeled_bucket",
+                    v2,
+                    labels,
+                    ExactLabelsMatcher(HistogramLabelSet("+Inf"))
+                ),
                 SampleMatcher("http_requests_labeled_count", Matcher.Eq(1.0), ohLabels),
                 SampleMatcher("http_requests_labeled_sum", Matcher.Eq(9.0), ohLabels),
                 SampleMatcher("http_requests_labeled_bucket", v0, ohLabels, histLabels(1)),
@@ -537,7 +544,12 @@ class MetricTests {
                 SampleMatcher("http_requests_labeled_bucket", v0, ohLabels, histLabels(8)),
                 SampleMatcher("http_requests_labeled_bucket", v1, ohLabels, histLabels(9)),
                 SampleMatcher("http_requests_labeled_bucket", v1, ohLabels, histLabels(10)),
-                SampleMatcher("http_requests_labeled_bucket", v1, ohLabels, ExactLabelsMatcher(HistogramLabelSet("+Inf"))),
+                SampleMatcher(
+                    "http_requests_labeled_bucket",
+                    v1,
+                    ohLabels,
+                    ExactLabelsMatcher(HistogramLabelSet("+Inf"))
+                ),
             )
         )
     }
