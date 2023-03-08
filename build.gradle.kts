@@ -6,13 +6,7 @@ plugins {
     kotlin("multiplatform")
     jacoco
     `maven-publish`
-    signing
-    id("org.ajoberstar.grgit") version Versions.grgit
-    id("io.github.gradle-nexus.publish-plugin")
 }
-
-val gitDescribe = grgit.describe(mapOf("match" to listOf("v*"), "tags" to true))
-    ?: "v0.0.0-SNAPSHOT"
 
 val publishedProjects = allprojects
     .filter { p -> p.name.startsWith("prometheus") }
@@ -30,20 +24,28 @@ val publishedKotlinClassDirs = publishedProjects
         "${p.buildDir}/classes/kotlin/jvm/main"
     }
 
-
 allprojects {
     group = "dev.evo.prometheus"
-    version = gitDescribe.trimStart('v')
+    version = "0.0.1-fork"
 
     val isProjectPublished = this in publishedProjects
     if (isProjectPublished) {
         apply {
             plugin("maven-publish")
-            plugin("signing")
         }
-
-        signing {
-            sign(publishing.publications)
+        publishing {
+            repositories {
+                maven {
+                    name = "nexusReleases"
+                    credentials {
+                        val nexusUser: String? by project
+                        val nexusPassword: String? by project
+                        username = System.getenv("NEXUS_USERNAME") ?: System.getenv("NEXUS_USER") ?: nexusUser
+                        password = System.getenv("NEXUS_PASSWORD") ?: System.getenv("NEXUS_PASS") ?: nexusPassword
+                    }
+                    url = uri(System.getenv("NEXUS_URL") ?: "")
+                }
+            }
         }
     }
 
@@ -161,9 +163,3 @@ tasks {
 
 extra["projectUrl"] = uri("https://github.com/anti-social/prometheus-kt")
 configureMultiplatformPublishing("prometheus-kt", "Prometheus Kotlin Client")
-
-nexusPublishing {
-    repositories {
-        configureSonatypeRepository(project)
-    }
-}
