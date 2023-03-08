@@ -1,4 +1,5 @@
-import dev.evo.prometheus.ktor.MetricsFeature
+import dev.evo.prometheus.ktor.Metrics
+import dev.evo.prometheus.ktor.MetricsPlugin
 import dev.evo.prometheus.ktor.metrics
 
 import io.ktor.server.application.Application
@@ -23,13 +24,15 @@ suspend fun main(args: Array<String>) {
     val env = commandLineEnvironment(arrayOf("-port=8080") + args)
     val port = env.connectors.single().port
     val url = "localhost:$port"
-    println("""
+    println(
+        """
         Try some requests:
         curl -X POST $url/process
         curl -X GET $url/delay/123
         
         And see metrics at: http://localhost:$port/metrics
-    """.trimIndent())
+    """.trimIndent()
+    )
 
     embeddedServer(
         Netty,
@@ -40,8 +43,10 @@ suspend fun main(args: Array<String>) {
 }
 
 fun Application.module() {
-    val metrics = MetricsFeature()
-    install(metrics)
+    val metrics = Metrics()
+    install(MetricsPlugin) {
+        this.metrics = metrics
+    }
 
     routing {
         get("/delay/{delayMs}") {
@@ -55,6 +60,6 @@ fun Application.module() {
             call.respondText("Processed in $delayMs ms")
         }
 
-        metrics(metrics.metrics)
+        metrics(metrics)
     }
 }

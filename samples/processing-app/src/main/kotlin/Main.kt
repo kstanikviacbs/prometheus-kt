@@ -1,7 +1,6 @@
 import dev.evo.prometheus.PrometheusMetrics
 import dev.evo.prometheus.LabelSet
 import dev.evo.prometheus.jvm.DefaultJvmMetrics
-import dev.evo.prometheus.ktor.MetricsFeature
 import dev.evo.prometheus.ktor.metricsModule
 
 import io.ktor.server.engine.commandLineEnvironment
@@ -51,7 +50,7 @@ class ProcessingLabels : LabelSet() {
 }
 
 object AppMetrics : PrometheusMetrics() {
-    val processedProducts by histogram("processed_products", logScale(0, 2)) {
+    val processedProducts by histogram("processed_products", logScale(IntRange(0, 2))) {
         ProcessingLabels()
     }
     val jvm by submetrics(DefaultJvmMetrics())

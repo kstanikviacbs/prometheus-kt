@@ -41,20 +41,8 @@ fun KotlinMultiplatformExtension.configureTargets(project: Project, disableJs: B
         }
     }
 
-    val hostOs = System.getProperty("os.name")
-    val isMingwX64 = hostOs.startsWith("Windows")
-
-    // Create target for the host platform.
-    val hostTarget = when {
-        hostOs == "Mac OS X" -> macosX64()
-        hostOs == "Linux" -> {
-            linuxX64()
-            // Kotlinx coroutines library isn't built for Linux ARM targets
-            // linuxArm32Hfp()
-        }
-        isMingwX64 -> mingwX64()
-        else -> throw GradleException("Host OS [$hostOs] is not supported in Kotlin/Native $project.")
-    }
+    macosX64()
+    linuxX64()
 
     targets.all {
         compilations.all {

@@ -26,7 +26,7 @@ val publishedKotlinClassDirs = publishedProjects
 
 allprojects {
     group = "dev.evo.prometheus"
-    version = "0.0.1-fork"
+    version = "0.0.3-fork"
 
     val isProjectPublished = this in publishedProjects
     if (isProjectPublished) {
@@ -155,7 +155,7 @@ tasks {
 
         dependsOn(
             ":prometheus-kt-hotspot:test",
-            ":prometheus-kt-ktor:test",
+            ":prometheus-kt-ktor:jvmTest",
             ":prometheus-kt-push:jvmTest"
         )
     }
