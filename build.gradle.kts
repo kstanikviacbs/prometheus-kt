@@ -26,7 +26,7 @@ val publishedKotlinClassDirs = publishedProjects
 
 allprojects {
     group = "dev.evo.prometheus"
-    version = "0.0.3-fork"
+    version = "0.0.4-fork"
 
     val isProjectPublished = this in publishedProjects
     if (isProjectPublished) {

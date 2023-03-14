@@ -133,6 +133,7 @@ interface HttpMetrics {
         get() = null
 
     data class Config(
+        val prefix: String = "http",
         val totalRequestsRange: IntRange = IntRange(0, 4),
         val requestSizesRange: IntRange = IntRange(0, 6),
         val responseSizesRange: IntRange = IntRange(0, 6)
@@ -140,7 +141,7 @@ interface HttpMetrics {
 }
 
 class StandardHttpMetrics(config: HttpMetrics.Config) : PrometheusMetrics() {
-    private val prefix = "http"
+    private val prefix = config.prefix
 
     val totalRequests by histogram(
         "${prefix}_total_requests", logScale(config.totalRequestsRange)
