@@ -42,6 +42,7 @@ fun KotlinMultiplatformExtension.configureTargets(project: Project, disableJs: B
     }
 
     macosX64()
+    macosArm64()
     linuxX64()
 
     targets.all {
